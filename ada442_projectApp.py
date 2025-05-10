@@ -13,7 +13,7 @@ st.write("Fill in the following client and economic data to predict the likeliho
 # Load test data (you need to have this dataset available)
 # For this example, we'll generate some dummy data similar to the input features.
 # In practice, you would load the actual test dataset.
-test_data = pd.read_csv("test_data.csv")  # Replace with your actual test dataset path
+test_data = pd.read_csv("bank-additional.csv")  # Replace with your actual test dataset path
 
 # Function to fill form with example values
 def fill_example_data(index):
