@@ -3,7 +3,7 @@ import pandas as pd
 import joblib
 
 # Load the trained model (pipeline)
-model = joblib.load("ada442_projectModel.pkl")
+model = joblib.load("best_model.pkl")
 
 # Title
 st.title("ADA442 Project - Bank Term Deposit Subscription Predictor")
