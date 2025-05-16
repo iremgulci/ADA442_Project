@@ -1,9 +1,17 @@
 import streamlit as st
 import pandas as pd
 import joblib
+import numpy as np
+
 
 def yes_no_to_binary(x):
     return x.applymap(lambda val: 1 if val == 'yes' else 0).astype(int)
+
+def log_transform_func(df):
+    return df.assign(
+        campaign=np.log1p(df['campaign']),
+        previous=np.log1p(df['previous'])
+    )
 
 # Load the trained model (pipeline)
 model = joblib.load("best_model.pkl")
@@ -83,13 +91,13 @@ if st.button("Predict"):
     else:
         st.write(f"The client is predicted NOT to subscribe.")
         
-    """probability = model.predict_proba(input_data)[0][1]
+    probability = model.predict_proba(input_data)[0][1]
 
     # Show result
     if prediction == 1:
         st.success(f"The client is predicted to SUBSCRIBE to a term deposit. (Probability: {probability:.2%})")
     else:
-        st.error(f"The client is predicted NOT to subscribe. (Probability: {probability:.2%})")"""
+        st.error(f"The client is predicted NOT to subscribe. (Probability: {probability:.2%})")
     
 st.header("Test Set Example Evaluation")
 
@@ -108,6 +116,7 @@ for i, idx in enumerate(example_indices):
             # Predict
             test_sample = X_test.iloc[[idx]]
             pred = model.predict(test_sample)[0]
+            pred_proba = model.predict_proba(test_sample)[0]  # probabilities for each class
             actual = y_test.iloc[idx][0] if isinstance(y_test.iloc[idx], pd.Series) else y_test.iloc[idx]
 
             # Show prediction result
@@ -117,7 +126,7 @@ for i, idx in enumerate(example_indices):
             pred_label = label_map.get(pred, "Unknown")
             actual_label = label_map.get(actual, "Unknown")
 
-            # Show result
+            # Show result with probabilities
             if pred == actual:
                 st.markdown(f"✅ **Correct Prediction:** {pred_label}")
             else:
@@ -126,3 +135,8 @@ for i, idx in enumerate(example_indices):
                     **Predicted:** {pred_label}  
                     **Actual:** {actual_label}
                     """)
+
+            st.markdown(f"**Prediction probabilities:**")
+            st.write(f"NOT SUBSCRIBE: {pred_proba[0]:.3f}")
+            st.write(f"SUBSCRIBE: {pred_proba[1]:.3f}")
+
