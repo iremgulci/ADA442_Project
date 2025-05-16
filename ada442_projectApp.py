@@ -2,6 +2,9 @@ import streamlit as st
 import pandas as pd
 import joblib
 
+def yes_no_to_binary(x):
+    return x.applymap(lambda val: 1 if val == 'yes' else 0).astype(int)
+
 # Load the trained model (pipeline)
 model = joblib.load("best_model.pkl")
 
@@ -74,10 +77,52 @@ if st.button("Predict"):
 
     # Predict
     prediction = model.predict(input_data)[0]
-    probability = model.predict_proba(input_data)[0][1]
+    
+    if prediction == 1:
+        st.write(f"The client is predicted to SUBSCRIBE to a term deposit.")
+    else:
+        st.write(f"The client is predicted NOT to subscribe.")
+        
+    """probability = model.predict_proba(input_data)[0][1]
 
     # Show result
     if prediction == 1:
         st.success(f"The client is predicted to SUBSCRIBE to a term deposit. (Probability: {probability:.2%})")
     else:
-        st.error(f"The client is predicted NOT to subscribe. (Probability: {probability:.2%})")
+        st.error(f"The client is predicted NOT to subscribe. (Probability: {probability:.2%})")"""
+    
+st.header("Test Set Example Evaluation")
+
+# Load test data
+X_test = pd.read_csv("X_test.csv")
+y_test = pd.read_csv("y_test.csv")
+
+# Choose 5 static example indices (could be random or the first 5)
+example_indices = [15, 16, 17, 18, 19]
+
+# Layout buttons in a row
+cols = st.columns(len(example_indices))
+for i, idx in enumerate(example_indices):
+    with cols[i]:
+        if st.button(f"Example {idx}"):
+            # Predict
+            test_sample = X_test.iloc[[idx]]
+            pred = model.predict(test_sample)[0]
+            actual = y_test.iloc[idx][0] if isinstance(y_test.iloc[idx], pd.Series) else y_test.iloc[idx]
+
+            # Show prediction result
+            st.subheader(f"Result for Example {idx}")
+            # Map numeric predictions to labels
+            label_map = {0: "NOT SUBSCRIBE", 1: "SUBSCRIBE"}
+            pred_label = label_map.get(pred, "Unknown")
+            actual_label = label_map.get(actual, "Unknown")
+
+            # Show result
+            if pred == actual:
+                st.markdown(f"✅ **Correct Prediction:** {pred_label}")
+            else:
+                st.markdown(f"""
+                    ❌ *Incorrect Prediction*  
+                    **Predicted:** {pred_label}  
+                    **Actual:** {actual_label}
+                    """)
