@@ -1,8 +1,10 @@
 import streamlit as st
 import pandas as pd
 import joblib
+import shap
+import matplotlib.pyplot as plt
 import numpy as np
-
+import random
 
 def yes_no_to_binary(x):
     return x.applymap(lambda val: 1 if val == 'yes' else 0).astype(int)
@@ -140,3 +142,55 @@ for i, idx in enumerate(example_indices):
             st.write(f"NOT SUBSCRIBE: {pred_proba[0]:.3f}")
             st.write(f"SUBSCRIBE: {pred_proba[1]:.3f}")
 
+# Tahmin eşiği ayarı
+threshold = st.slider("📐 Tahmin Eşiği", 0.0, 1.0, 0.5, 0.01)
+
+# Rastgele 5 örnek seç
+st.header("🎲 5 Rastgele Test Örneği")
+random_indices = random.sample(range(len(X_test)), 5)
+
+# SHAP hazırla
+shap.initjs()
+classifier = model.named_steps["classifier"]
+explainer = shap.TreeExplainer(classifier)
+
+# Ön işleme nesnesi
+preprocessor = model.named_steps["preprocessing"]
+
+for i, idx in enumerate(random_indices):
+    st.subheader(f"🔹 Örnek {i+1} (Index: {idx})")
+
+    # Veri ve gerçek etiket
+    test_sample = X_test.iloc[[idx]]
+    true_label = int(y_test.iloc[idx])
+
+    # Tahmin
+    proba = model.predict_proba(test_sample)[0][1]
+    pred = int(proba >= threshold)
+
+    # SHAP verisi
+    transformed = preprocessor.transform(test_sample)
+    shap_values = explainer.shap_values(transformed)
+
+    # Sonuçlar
+    st.write(f"Gerçek Etiket: {'✅ Abone' if true_label == 1 else '❌ Abone Değil'}")
+    st.write(f"Tahmin: {'✅ Abone' if pred == 1 else '❌ Abone Değil'}")
+    st.write(f"Olasılık: %{proba * 100:.2f}")
+    if pred == true_label:
+        st.success("✅ Doğru Tahmin")
+    else:
+        st.error("❌ Yanlış Tahmin")
+
+    st.markdown("**📄 Özellik Değerleri:**")
+    st.dataframe(test_sample.T)
+
+    st.markdown("**🧠 SHAP Açıklama (Feature Importance):**")
+    feature_names = preprocessor.get_feature_names_out()
+    shap.waterfall_plot(shap.Explanation(
+        values=shap_values[0],
+        base_values=explainer.expected_value,
+        data=transformed[0],
+        feature_names=feature_names  # 🔥 en kritik satır
+    ), show=False)
+    st.pyplot()
+    st.markdown("---")
