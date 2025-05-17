@@ -106,8 +106,7 @@ X_test = pd.read_csv("X_test.csv")
 y_test = pd.read_csv("y_test.csv")
 
 # Choose 5 static example indices (could be random or the first 5)
-example_indices = [15, 16, 17, 18, 19]
-
+example_indices = [24,25,26,27,28]
 # Layout buttons in a row
 cols = st.columns(len(example_indices))
 for i, idx in enumerate(example_indices):
